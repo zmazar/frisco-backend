@@ -1,6 +1,9 @@
 require "dbi"
 require "./modules/BeerMod"
 
+USER = "friscoapp"
+PASS = "friscotapAPPLE"
+
 module BeerDatabase
     class BeerDb
         attr_accessor :dbh, :table_name
@@ -14,8 +17,8 @@ module BeerDatabase
                 # connect to the DB
                 @dbh = DBI.connect(
                     "DBI:Mysql:beer_db:localhost", 
-                    "friscoapp", 
-                    "friscotapAPPLE"
+                    USER, 
+                    PASS
                 )
 
                 puts "Connected to beer_db"

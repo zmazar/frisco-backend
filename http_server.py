@@ -6,8 +6,8 @@ import MySQLdb
 import json
 
 # Server variables
-HOST = "localhost"
-PORT = 8080
+HOST = "45.33.92.167"
+PORT = 80
 
 # Database variables
 COLUMBIA_TABLE = "columbia"
@@ -15,19 +15,29 @@ CROFTON_TABLE = "crofton"
 BEER_DB = "beer_db"
 USER = "friscoapp"
 PASS = "friscotapAPPLE"
+LOCALHOST = "localhost"
 
 class Beer:
     name = ""
     abv = ""
+    frisco_class = 0
+    timestamp = ""
+    frisco_id = 0
 
-    def __init__(self, name, abv):
+    def __init__(self, name, abv, cls, time, fid):
         self.name = name
         self.abv = abv
+        self.frisco_class = cls
+        self.timestamp = str(time)
+        self.frisco_id = fid
 
     def get_dict(self):
         bd = dict()
         bd['name'] = self.name
         bd['abv'] = self.abv
+        bd['frisco_class'] = self.frisco_class
+        bd['tap_time'] = self.timestamp
+        bd['frisco_id'] = self.frisco_id
 
         return bd
 
@@ -65,20 +75,20 @@ def _readBeersFromDb(table_name):
         beer_list = []
 
         # Connect to the database
-        db = MySQLdb.connect(HOST, USER, PASS, BEER_DB)
+        db = MySQLdb.connect(LOCALHOST, USER, PASS, BEER_DB)
 
         # Prepare a cursor to traverse the resulting rows
         cursor = db.cursor()
 
         # Execute a query to get all the beers in the specified table
-        query = "SELECT * FROM %s" % table_name
+        query = "SELECT * FROM " + table_name
         cursor.execute(query)
      
         # Now fetch all of the rows from the resulting query
         beers = cursor.fetchall()
 
         for beer in beers:
-            b = Beer(beer[0], beer[1])
+            b = Beer(beer[0], beer[1], beer[4], beer[5], beer[2])
             beer_list.append(b)
         
         # Close the db

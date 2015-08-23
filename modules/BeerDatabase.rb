@@ -30,7 +30,6 @@ module BeerDatabase
         end
 
         def disconnect()
-            puts "Disconnected from beer_db"
             dbh.disconnect() if dbh
         end
 
@@ -39,14 +38,13 @@ module BeerDatabase
             if @dbh
                 begin
                     # Build INSERT statement
-                    stmt = "INSERT INTO #{@table_name}(NAME, ABV) "
-                    stmt += "VALUES(?, ?)"
+                    stmt = "INSERT INTO #{@table_name}(NAME, ABV, FRISCO_CLASS, TAP_DATE, FRISCO_ID) "
+                    stmt += "VALUES(?, ?, ?, ?, ?)"
 
                     # Perform the query
                     sth = dbh.prepare(stmt)
-                    sth.execute(beer.name, beer.abv)
+                    sth.execute(beer.name, beer.abv, beer.frisco_class, beer.tap_time, beer.frisco_id)
 
-                    puts "Record created"
                     sth.finish
                     dbh.commit
                 rescue DBI::DatabaseError => e
@@ -62,16 +60,14 @@ module BeerDatabase
             if @dbh
                 begin
                     # Build INSERT statement
-                    stmt = "INSERT IGNORE INTO #{@table_name}(NAME, ABV) "
-                    stmt += "VALUES(?, ?)"
+                    stmt = "INSERT IGNORE INTO #{@table_name}(NAME, ABV, FRISCO_CLASS, TAP_DATE, FRISCO_ID) "
+                    stmt += "VALUES(?, ?, ?, ?, ?)"
 
                     # Prepare the query
                     sth = dbh.prepare(stmt)
 
                     beers.each_with_index do |beer, index|
-                        sth.execute(beer.name, beer.abv)
-
-                        puts "Record created: #{beer.name}"
+                        sth.execute(beer.name, beer.abv, beer.frisco_class, beer.tap_time, beer.frisco_id)
                     end
 
                     sth.finish 
@@ -90,8 +86,9 @@ module BeerDatabase
             if @dbh
                 begin
                     row = dbh.select_one("SELECT * FROM #{@table_name} WHERE NAME = #{beer.name}")
-                    beer = BeerMod::Beer.new(row[0], row[1])
-                    puts "#{beer.name} #{beer.abv}"
+                    b = BeerMod::Beer.new(row[0], row[1], row[4])
+                    b.set_taptime(row[5])
+                    b.set_friscoid(row[2])
 
                     sth.finish
                 rescue DBI::DatabaseError => e
@@ -101,7 +98,7 @@ module BeerDatabase
                 end
             end
 
-            return beer
+            return b
         end
 
         def beerdb_get_all()
@@ -114,8 +111,10 @@ module BeerDatabase
                     beers_list = Array.new
 
                     sth.fetch do |row|
-                        b = BeerMod::Beer.new(row[0], row[1])
-                        puts "Read #{b.name} #{b.abv}"
+                        b = BeerMod::Beer.new(row[0], row[1], row[4])
+                        b.set_taptime(row[5])
+                        b.set_friscoid(row[2])
+
                         beers_list << b
                     end
 
@@ -132,6 +131,7 @@ module BeerDatabase
         end
 
         def beerdb_update()
+            
         end
 
         def beerdb_delete()

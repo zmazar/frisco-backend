@@ -17,57 +17,68 @@ module Frisco
             agent.user_agent_alias = 'Windows Mozilla'
         }
 
-        beers = []
-        abvs = []
+        beers16 = []
+        beers10 = []
+        beers8 = []
+        abvs16 = []
+        abvs10 = []
+        abvs8 = []
         page = spider.get(url)
 
+        # Scrape the page for 16oz beers
         page.search('.row > .sixteenounce > .name').each do |beer|
-            beers << beer.text
+            beers16 << beer.text
         end
 
         page.search('.row > .sixteenounce > .abv').each do |abv|
-            abvs << abv.text
+            abvs16 << abv.text
         end
 
+        # Scrape the page of 10oz beers
         page.search('.row > .tenounce > .name').each do |beer|
-            beers << beer.text
+            beers10 << beer.text
         end
 
         page.search('.row > .tenounce > .abv').each do |abv|
-            abvs << abv.text
+            abvs10 << abv.text
         end
 
+        # Scrape the page for Special beers
         page.search('.row > .eightounce > .name').each do |beer|
-            beers << beer.text
+            beers8 << beer.text
         end
 
         page.search('.row > .eightounce > .abv').each do |abv|
-            abvs << abv.text
+            abvs8 << abv.text
         end
 
         beers_list = Array.new
 
-        puts "Frisco Taphouse / Beers:"
-        beers.each_with_index do |beer, index|
-            b = BeerMod::Beer.new(beer, abvs[index])
+        # Insert 16oz beers into the beer list
+        beers16.each_with_index do |beer, index|
+            b = BeerMod::Beer.new(beer, abvs16[index], 1)
+            beers_list << b
+        end
+
+        # Insert 10oz beers into the beer list
+        beers10.each_with_index do |beer, index|
+            b = BeerMod::Beer.new(beer, abvs10[index], 2)
+            beers_list << b
+        end
+
+        # Insert Special beers into the beer list
+        beers8.each_with_index do |beer, index|
+            b = BeerMod::Beer.new(beer, abvs8[index], 3)
             beers_list << b
         end
 
         # Insert the beer list into the table
         db = BeerDatabase::BeerDb.new(table)
         db.connect()
-
         db.beerdb_insert_all(beers_list)
-
-        beers_list2 = db.beerdb_get_all()
-
         db.disconnect()
-
-        beers_list2.each do |beer|
-            puts "#{beer.name} #{beer.abv}"
-        end
     end
 end
 
 Frisco.beers(COLUMBIA_URL, COLUMBIA_TABLE)
-#Frisco.beers(CROFTON_URL, CROFTON_TABLE)
+Frisco.beers(CROFTON_URL, CROFTON_TABLE)

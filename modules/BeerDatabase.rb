@@ -131,10 +131,27 @@ module BeerDatabase
         end
 
         def beerdb_update()
-            
         end
 
-        def beerdb_delete()
+        def beerdb_delete(beer)
+            # As long as we have a connection to the database
+            if @dbh
+                begin
+                    # Build INSERT statement
+                    stmt = "DELETE FROM #{@table_name} WHERE inv_id=?"
+
+                    # Perform the query
+                    sth = dbh.prepare(stmt)
+                    sth.execute(beer.inv_id)
+
+                    sth.finish
+                    dbh.commit
+                rescue DBI::DatabaseError => e
+                    puts "An error occurred"
+                    puts "Error code:    #{e.err}"
+                    puts "Error message: #{e.errstr}"
+                end
+            end
         end
     end
 end

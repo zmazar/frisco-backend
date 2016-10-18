@@ -1,0 +1,12 @@
+[Unit]
+Description=Frisky Taphouse Daemon
+After=networking.target
+
+[Service]
+type=simple
+EnvironmentFile=/etc/friscod.conf
+ExecStart=/var/www/friskytaphouse.com/frisco-backend/http_server.py
+ExecStop=/usr/bin/killall http_server.py
+
+[Install]
+WantedBy=multi-user.target

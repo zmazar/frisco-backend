@@ -1,69 +1,54 @@
 #!/bin/bash
-# friscod daemon
-# chkconfig: 2345 20 80
-# description: FriskyTaphouse daemon
-# processname: friscod
 
-DAEMON_PATH="/var/www/friskytaphouse.com/frisco-backend/"
-DAEMON=http_server.py
-DAEMONOPTS=""
+# Provides:         friscod
+# Required-Start:   $remote_fs $syslog
+# Required-Stop:    $remote_fs $syslog
+# Default-Start:    2 3 4 5 
+# Default-Stop:     0 1 6
+# Short-Description: Daemon for servicing Frisky Taphouse requests.
+# Description:      This daemon services both Beer Inventory as well as Frisky Taphouse requests for Frisco Taphouse beer lists.
 
-NAME=friscod
-DESC="Frisky Taphouse Daemon"
-PIDFILE=/var/run/$NAME.pid
-SCRIPTNAME=/etc/init.d/friscod
+DIR=/var/www/friskytaphouse.com/frisco-backend
+DAEMON=$DIR/friscod.py
+DAEMON_NAME=friscod
+
+DAEMON_OPTS=""
+DAEMON_USER=root
+
+PIDFILE=/var/run/$DAEMON_NAME.pid
+
+. /lib/lsb/init-functions
+
+do_start() {
+    log_daemon_msg "Starting system $DAEMON_NAME daemon"
+    start-stop-daemon --start --background --pidfile $PIDFILE --make-pidfile --user $DAEMON_USER --chuid $DAEMON_USER --startas $DAEMON -- $DAEMON_OPTS
+    log_end_msg $?
+}
+
+do_stop() {
+    log_daemon_msg "Stopping system $DAEMON_NAME daemon"
+    start-stop-daemon --stop --pidfile $PIDFILE --retry 10
+    log_end_msg $?
+}
 
 case "$1" in
-start)
-    printf "%-50s" "Starting $NAME..."
-    
-    cd $DAEMON_PATH
-    PID=`$DAEMON $DAEMONOPTS > /dev/null 2>&1 & echo $!`
-    #echo "Saving PID" $PID " to " $PIDFILE
+    start|stop)
+        do_${1}
+    ;;
 
-    if [ -z $PID ]; then
-        printf "%s\n" "Fail"
-    else
-        echo $PID > $PIDFILE
-        printf "%s\n" "OK"
-    fi
-;;
-status)
-    printf "%-50s" "Checking $Name..."
+    restart|reload|force-reload)
+        do_stop
+        do_start
+        ;;
 
-    if [ -f $PIDFILE ]; then
-        PID=`cat $PIDFILE`
+    status)
+        status_of_proc "$DAEMON_NAME" "$DAEMON" && exit 0 || exit $?
+        ;;
 
-        if [ -z "`ps axf | grep ${PID} | grep -v grep`" ]; then
-            printf "%s\n" "Process dead but pidfile exists"
-        else
-            echo "Running"
-        fi
-    else
-        printf "%s\n" "Service not running"
-    fi
-;;
-stop)
-    printf "%-50s" "Stopping $NAME"
+    *)
+        echo "Usage: /etc/init.d/$DAEMON_NAME {start|stop|restart|status}"
+        exit 1
+        ;;
 
-    PID=`cat $PIDFILE`
-    cd $DAEMON_PATH
-
-    if [ -f $PIDFILE ]; then
-        kill -HUP $PID
-        printf "%s\n" "OK"
-        rm -f $PIDFILE
-    else
-        printf "%s\n" "pidfile not found"
-    fi
-;;
-restart)
-    $0 stop
-    $0 start
-;;
-*)
-    # Default case
-    echo "Usage: $0 {status|start|stop|restart}"
-    exit 1
 esac
-
+exit 0
